@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live GPS Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style> #map { height: 350px; } </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 text-slate-100">
+
+    <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-700">
+        <h1 class="text-2xl font-bold text-center text-emerald-400 mb-2">Live Device Tracker</h1>
+        <p class="text-xs text-center text-slate-400 mb-6">Uses browser-level secure hardware GPS location consent.</p>
+
+        <div class="space-y-4">
+            <button onclick="startTracking()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold p-3 rounded-xl transition duration-200 cursor-pointer shadow-lg">
+                📍 Get Current Location
+            </button>
+
+            <div id="mapContainer" class="rounded-xl overflow-hidden border border-slate-700 hidden">
+                <div id="map"></div>
+            </div>
+
+            <div id="coordsBox" class="p-4 bg-slate-950 rounded-xl font-mono text-sm space-y-1 hidden text-emerald-300">
+                <p><strong>Latitude:</strong> <span id="latText">0.0</span></p>
+                <p><strong>Longitude:</strong> <span id="lngText">0.0</span></p>
+                <p><strong>Accuracy:</strong> <span id="accText">0</span> meters</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let marker;
+
+        function startTracking() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            // High accuracy forces the mobile phone to turn on its active internal GPS unit
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            navigator.geolocation.getCurrentPosition(success, error, options);
+        }
+
+        function success(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = Math.round(position.coords.accuracy);
+
+            // Update UI readings
+            document.getElementById('latText').innerText = lat;
+            document.getElementById('lngText').innerText = lng;
+            document.getElementById('accText').innerText = accuracy;
+            
+            document.getElementById('mapContainer').classList.remove('hidden');
+            document.getElementById('coordsBox').classList.remove('hidden');
+
+            // Render Map dynamically
+            if (!map) {
+                map = L.map('map').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+                marker = L.marker([lat, lng]).addTo(map).bindPopup("Device Position").openPopup();
+            } else {
+                // Smoothly pan if user moves
+                map.setView([lat, lng], 16);
+                marker.setLatLng([lat, lng]);
+            }
+        }
+
+        function error(err) {
+            if(err.code === 1) {
+                alert("Permission denied. Please grant location access in your device settings.");
+            } else {
+                alert("Unable to retrieve position: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
