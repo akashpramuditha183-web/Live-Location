@@ -89,3 +89,93 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMEI Hardware Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4 text-gray-100">
+
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-700">
+        <h1 class="text-2xl font-bold text-center text-purple-400 mb-2">IMEI Specification Analyzer</h1>
+        <p class="text-xs text-center text-gray-400 mb-6">Deconstruct specifications safely using TAC allocation math.</p>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Enter 15-Digit IMEI</label>
+                <input type="text" id="imeiInput" maxlength="15" placeholder="e.g., 35682110..." class="w-full p-3 bg-gray-950 border border-gray-700 rounded-lg text-white tracking-widest font-mono outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <button onclick="analyzeIMEI()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold p-3 rounded-lg transition duration-200 cursor-pointer shadow-md">
+                Analyze Hardware Structure
+            </button>
+        </div>
+
+        <div id="analysisBox" class="mt-6 p-4 bg-gray-950 rounded-lg border border-gray-700 hidden">
+            <h3 class="font-bold text-purple-400 mb-3 text-sm uppercase tracking-wider">Structural Breakdown:</h3>
+            <div class="space-y-3 text-xs font-mono">
+                <p class="flex justify-between border-b border-gray-800 pb-1">
+                    <span class="text-gray-400">Type Allocation Code (TAC):</span> 
+                    <span id="tacOut" class="text-white font-bold"></span>
+                </p>
+                <p class="flex justify-between border-b border-gray-800 pb-1">
+                    <span class="text-gray-400">Reporting Body ID:</span> 
+                    <span id="rbiOut" class="text-white"></span>
+                </p>
+                <p class="flex justify-between border-b border-gray-800 pb-1">
+                    <span class="text-gray-400">Luhn Integrity Check:</span> 
+                    <span id="luhnOut"></span>
+                </p>
+                <div class="bg-purple-950/40 p-2 rounded text-gray-300 mt-2 leading-relaxed">
+                    <span class="text-purple-300 font-bold">Note:</span> Real-time network location query data is strictly guarded by telco operators and is inaccessible via public browser scripts.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Luhn Algorithm validation to check if IMEI string pattern is valid
+        function isValidLuhn(imei) {
+            let sum = 0;
+            for (let i = 0; i < imei.length; i++) {
+                let d = parseInt(imei.charAt(i));
+                if (i % 2 !== 0) {
+                    d *= 2;
+                    if (d > 9) d -= 9;
+                }
+                sum += d;
+            }
+            return (sum % 10 === 0);
+        }
+
+        function analyzeIMEI() {
+            const imei = document.getElementById('imeiInput').value.replace(/\s+/g, '');
+            
+            if (imei.length !== 15 || isNaN(imei)) {
+                alert('An IMEI must be a valid 15-digit code.');
+                return;
+            }
+
+            const tac = imei.substring(0, 8);
+            const rbi = imei.substring(0, 2); // Reporting Body Identifier indicates target regional office
+            
+            document.getElementById('tacOut').innerText = tac;
+            document.getElementById('rbiOut').innerText = `${rbi} (Regional Issuer)`;
+
+            const luhnElement = document.getElementById('luhnOut');
+            if (isValidLuhn(imei)) {
+                luhnElement.innerText = "PASS (Valid Formula)";
+                luhnElement.className = "text-green-400 font-bold";
+            } else {
+                luhnElement.innerText = "FAIL (Malformed Number)";
+                luhnElement.className = "text-red-400 font-bold";
+            }
+
+            document.getElementById('analysisBox').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
